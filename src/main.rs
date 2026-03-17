@@ -1,26 +1,22 @@
-mod map;
-mod camera;
-mod enemies;
-
 use bevy::prelude::*;
 
-use crate::enemies::enemy::EnemyPlugin;
-use crate::map::map::MapPlugin;
-use crate::camera::camera::CameraPlugin;
-
+mod camera;
+mod enemies;
+mod map;
 
 fn main() {
-    App::new().add_plugins((
-        DefaultPlugins,
-        MapPlugin,
-        CameraPlugin,
-        EnemyPlugin
-    ))
-    .run();
+    App::new()
+        .add_plugins((
+            DefaultPlugins,
+            map::MapPlugin,
+            camera::CameraPlugin,
+            enemies::EnemyPlugin,
+        ))
+        .run();
 }
 
-
-// TODO: 
+// TODO:
 // Setup Grid with backdrop and objectives
 // Spawn enemies
 // Let player place towers/operators
+
