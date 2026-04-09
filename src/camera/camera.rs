@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 
 pub struct CameraPlugin;
@@ -15,17 +17,16 @@ fn setup(mut commands: Commands) {
     ));
 }
 
-
 fn setup_light(mut commands: Commands) {
     commands.spawn((
-        DirectionalLight{
+        DirectionalLight {
             illuminance: light_consts::lux::OVERCAST_DAY,
             shadows_enabled: true,
             ..default()
         },
         Transform {
             translation: Vec3::new(0.0, 1.5, 0.0),
-            rotation: Quat::from_rotation_x(-3.14 / 6.),
+            rotation: Quat::from_rotation_x(-PI / 6.),
             ..default()
         },
     ));
