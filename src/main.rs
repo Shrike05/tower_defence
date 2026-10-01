@@ -14,8 +14,3 @@ fn main() {
         ))
         .run();
 }
-
-// TODO:
-// Setup Grid with backdrop and objectives
-// Spawn enemies
-// Let player place towers/operators
