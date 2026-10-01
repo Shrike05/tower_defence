@@ -1,4 +1,6 @@
+use crate::map::Map;
 use bevy::{platform::collections::HashMap, prelude::*};
+use std::path::Path;
 const SEARCH_DEPTH: u32 = 100;
 
 #[derive(Debug, Clone, PartialEq, Component)]
@@ -26,6 +28,9 @@ impl EnemyPos {
 }
 
 impl WalkNodes {
+    pub fn from_path_file(file: &Path, map: &Map) -> Option<Self> {
+        None
+    }
     pub fn shortest_path(
         start: IVec2,
         end: IVec2,

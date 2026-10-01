@@ -1,7 +1,5 @@
 Use new bevy scene notation
 
-Get the camera to move for debug purposes
-
 Get enemies to spawn and move, both continuously and cartoonishly(discrete)
 
 Implement Towers

@@ -9,14 +9,14 @@ use std::path::Path;
 pub struct MapPlugin;
 
 #[derive(Resource)]
-struct Map {
+pub struct Map {
     width: u32,
     tiles: Vec<TileType>,
 }
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        let map = Map::from_map_file(Path::new("./level0.map"));
+        let map = Map::from_map_file(Path::new("./levels/level0/level0.map"));
         let spawner = Spawner::new(0, map.get_tile_world_coordinates(40));
         let objective = Objective::new(0, map.get_tile_world_coordinates(49));
 
@@ -84,3 +84,4 @@ fn setup(
         ));
     }
 }
+
