@@ -1,5 +1,6 @@
-use crate::map::Map;
 use bevy::{platform::collections::HashMap, prelude::*};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 const SEARCH_DEPTH: u32 = 100;
 
@@ -28,8 +29,12 @@ impl EnemyPos {
 }
 
 impl WalkNodes {
-    pub fn from_path_file(file: &Path, map: &Map) -> Option<Self> {
-        None
+    pub fn from_path_file(file: &Path) -> Option<Self> {
+        let pairs = parse_file(file)?;
+
+        let path = pairs.iter().map(|pair| pair.1).collect();
+
+        Some(WalkNodes { path })
     }
     pub fn shortest_path(
         start: IVec2,
@@ -116,4 +121,45 @@ fn a_star(start: &IVec2, end: &IVec2, filter_map: HashMap<IVec2, bool>) -> Optio
     }
 
     None
+}
+
+fn parse_file(file: &Path) -> Option<Vec<(IVec2, IVec2)>> {
+    let file = File::open(file).ok()?;
+    let reader = BufReader::new(file);
+    let mut pairs = Vec::new();
+
+    for line in reader.lines() {
+        let line = line.ok()?;
+        let line = line.trim();
+
+        // Skip empty lines
+        if line.is_empty() {
+            continue;
+        }
+
+        // Split the line by the arrow "->"
+        let parts: Vec<&str> = line.split("->").collect();
+        if parts.len() != 2 {
+            continue; // Skip lines that don't match the expected structure
+        }
+
+        // Helper closure to parse strings like "( 4, 74 )" into [i32; 2]
+        let parse_coord = |s: &str| -> Option<IVec2> {
+            let s = s.trim();
+            let s = s.strip_prefix('(')?.strip_suffix(')')?;
+            let coords: Vec<&str> = s.split(',').collect();
+            if coords.len() != 2 {
+                return None;
+            }
+            let x = coords[0].trim().parse::<i32>().ok()?;
+            let y = coords[1].trim().parse::<i32>().ok()?;
+            Some(IVec2::new(x, y))
+        };
+
+        if let (Some(c1), Some(c2)) = (parse_coord(parts[0]), parse_coord(parts[1])) {
+            pairs.push((c1, c2));
+        }
+    }
+
+    Some(pairs)
 }
