@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 bevy = "0.18.1"
 derive-new = "0.7.0"
+rayon = "1.11.0"
 regex = "1.12.1"
 
 # Enable a small amount of optimization in the dev profile.

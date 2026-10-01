@@ -1,4 +1,7 @@
-mod enemy;
+mod basic;
+mod movement;
+mod plugin;
 mod spawner;
+mod types;
 
-pub use enemy::EnemyPlugin;
+pub use plugin::EnemyPlugin;

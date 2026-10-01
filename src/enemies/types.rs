@@ -1,15 +1,5 @@
 use bevy::prelude::*;
 
-use crate::enemies::spawner::spawn_enemy;
-
-pub struct EnemyPlugin;
-
-impl Plugin for EnemyPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_enemy);
-    }
-}
-
 #[derive(Bundle)]
 pub struct EnemyBundle {
     enemy: EnemyType,
@@ -31,10 +21,15 @@ pub enum EnemyType {
 }
 
 impl EnemyType {
-    pub fn create_enemy(&self, position: Vec2, meshes: &mut ResMut<Assets<Mesh>>, materials: &mut ResMut<Assets<StandardMaterial>>) -> EnemyBundle {
+    pub fn create_enemy(
+        &self,
+        position: Vec2,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+    ) -> EnemyBundle {
         EnemyBundle {
             enemy: *self,
-            mesh: Mesh3d(meshes.add(Cuboid::new(0.7,0.7,0.7))),
+            mesh: Mesh3d(meshes.add(Cuboid::new(0.7, 0.7, 0.7))),
             material: MeshMaterial3d(materials.add(Color::srgb(1., 0., 0.))),
             position: Transform::from_xyz(position.x, 1., position.y),
         }
