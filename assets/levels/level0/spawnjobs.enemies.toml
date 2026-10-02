@@ -1,0 +1,6 @@
+[[jobs]]
+time_of_spawn = 1.0
+time_between_spawn = 0.5
+enemies_count = 5
+enemy_type = "Basic"
+path = "level0/path0.path"

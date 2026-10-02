@@ -6,7 +6,7 @@ use std::path::Path;
 use crate::map::Map;
 const SEARCH_DEPTH: u32 = 100;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct WalkNodes {
     path: Vec<Vec2>,
 }

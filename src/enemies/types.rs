@@ -1,48 +1,32 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::enemies::basic::WalkNodes;
 
-#[derive(Bundle)]
-pub struct EnemyBundle {
-    enemy: EnemyType,
-    mesh: Mesh3d,
-    material: MeshMaterial3d<StandardMaterial>,
-    position: Transform,
-    progress: EnemyProgress,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum ArcherStates {
-    Walking,
-    Attacking,
-}
-
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Debug, Clone, Copy, Serialize, Deserialize, Default)]
 pub enum EnemyType {
+    #[default]
     Basic,
-    Archer(ArcherStates),
+    Archer,
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, Default)]
 pub struct EnemyProgress {
     pub path: WalkNodes,
     pub progress: f32,
 }
 
-impl EnemyType {
-    pub fn create_enemy(
-        &self,
-        path: WalkNodes,
-        position: Vec2,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-    ) -> EnemyBundle {
-        EnemyBundle {
-            enemy: *self,
-            mesh: Mesh3d(meshes.add(Cuboid::new(0.7, 0.7, 0.7))),
-            material: MeshMaterial3d(materials.add(Color::srgb(1., 0., 0.))),
-            position: Transform::from_xyz(position.x, 1., position.y),
-            progress: EnemyProgress { path, progress: 0. },
-        }
+#[derive(Component, Debug, Clone, Default)]
+pub struct EnemyInactive {
+    timer: Timer,
+}
+
+pub fn create_enemy(enemy_type: EnemyType, path: WalkNodes) -> impl Scene {
+    bsn! {
+        Mesh3d(asset_value(Cuboid::new(0.7, 0.7, 0.7)))
+        MeshMaterial3d<StandardMaterial>(asset_value(Color::srgb(1., 0., 0.)))
+        Transform::from_xyz(path.get_pos(&0.).x, 1., path.get_pos(&0.).y)
+        EnemyProgress { path, progress: 0. }
+        template_value(enemy_type)
     }
 }
