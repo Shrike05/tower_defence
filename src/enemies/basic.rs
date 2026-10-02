@@ -6,7 +6,7 @@ use std::path::Path;
 use crate::map::Map;
 const SEARCH_DEPTH: u32 = 100;
 
-#[derive(Debug, Clone, PartialEq, Resource)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct WalkNodes {
     path: Vec<Vec2>,
 }
@@ -47,10 +47,10 @@ impl WalkNodes {
         let segment = pure_progress.floor() as usize;
 
         let b = self.path[segment];
-        let a = self.path[if pure_progress < self.path_len() - 1. {
-            segment + 1
-        } else {
+        let a = self.path[if pure_progress >= self.path_len() - 1. {
             segment
+        } else {
+            segment + 1
         }];
 
         fractional * a + (1. - fractional) * b

@@ -1,27 +1,16 @@
-use crate::enemies::{
-    basic::*,
-    types::{EnemyProgress, EnemyType},
-};
+use crate::enemies::types::{EnemyProgress, EnemyType};
 use bevy::prelude::*;
 
 //Compute only partially over several frames
 pub fn update_enemy_positions(
-    mut enemies_query: Query<(&mut Transform, &EnemyProgress), With<EnemyType>>,
-    walknodes: Res<WalkNodes>,
+    mut enemies_query: Query<(&mut Transform, &mut EnemyProgress), With<EnemyType>>,
+    time: Res<Time>,
 ) {
     enemies_query
         .par_iter_mut()
-        .for_each(|(mut pos, progress)| {
-            let new_pos = walknodes.get_pos(&progress.0);
+        .for_each(|(mut pos, mut progress)| {
+            progress.progress += 0.1 * time.delta_secs();
+            let new_pos = progress.path.get_pos(&progress.progress);
             pos.translation = Vec3::new(new_pos.x, 1., new_pos.y);
         });
-}
-
-pub fn update_enemy_progress(mut enemy_query: Query<&mut EnemyProgress>, time: Res<Time>) {
-    enemy_query.iter_mut().for_each(|mut progress| {
-        progress.0 += 0.1 * time.delta_secs();
-        if progress.0 >= 1. {
-            progress.0 = 1.;
-        }
-    });
 }
