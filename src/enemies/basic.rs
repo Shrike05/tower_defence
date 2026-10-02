@@ -43,7 +43,7 @@ impl WalkNodes {
 
     pub fn get_pos(&self, progress: &f32) -> Vec2 {
         let pure_progress = progress * self.path_len() - 1.;
-        let fractional = pure_progress.fract();
+        let fractional = 1. - (1. - pure_progress.fract()).powi(3);
         let segment = pure_progress.floor() as usize;
 
         let b = self.path[segment];
