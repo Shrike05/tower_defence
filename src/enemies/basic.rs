@@ -2,37 +2,27 @@ use bevy::{platform::collections::HashMap, prelude::*};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::path::Path;
+
+use crate::map::Map;
 const SEARCH_DEPTH: u32 = 100;
 
-#[derive(Debug, Clone, PartialEq, Component)]
+#[derive(Debug, Clone, PartialEq, Resource)]
 pub struct WalkNodes {
-    path: Vec<IVec2>,
-}
-
-#[derive(Component, Clone, Debug, PartialEq)]
-pub struct EnemyPos {
-    progress: Vec<f32>,
-}
-
-impl EnemyPos {
-    pub fn add(&mut self, next_pos: f32) {
-        self.progress.push(next_pos);
-    }
-
-    pub fn set(&mut self, path: Vec<f32>) {
-        self.progress = path;
-    }
-
-    pub fn step(&mut self) -> f32 {
-        self.progress.remove(0)
-    }
+    path: Vec<Vec2>,
 }
 
 impl WalkNodes {
-    pub fn from_path_file(file: &Path) -> Option<Self> {
+    pub fn from_path_file(file: &Path, map: &Map) -> Option<Self> {
         let pairs = parse_file(file)?;
 
-        let path = pairs.iter().map(|pair| pair.1).collect();
+        let path = pairs
+            .iter()
+            .map(|pair| {
+                let p = pair.1;
+                let i = p.y + p.x * map.width as i32;
+                map.get_tile_world_coordinates(i as usize)
+            })
+            .collect();
 
         Some(WalkNodes { path })
     }
@@ -42,7 +32,9 @@ impl WalkNodes {
         filter_map: HashMap<IVec2, bool>,
     ) -> Option<Self> {
         let path = a_star(&start, &end, filter_map)?;
-        Some(WalkNodes { path })
+        Some(WalkNodes {
+            path: path.iter().map(|p| p.as_vec2()).collect(),
+        })
     }
 
     pub fn path_len(&self) -> f32 {
@@ -54,8 +46,12 @@ impl WalkNodes {
         let fractional = pure_progress.fract();
         let segment = pure_progress.floor() as usize;
 
-        let a = self.path[segment].as_vec2();
-        let b = self.path[segment].as_vec2();
+        let b = self.path[segment];
+        let a = self.path[if pure_progress < self.path_len() - 1. {
+            segment + 1
+        } else {
+            segment
+        }];
 
         fractional * a + (1. - fractional) * b
     }
