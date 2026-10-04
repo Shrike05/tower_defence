@@ -41,19 +41,32 @@ impl WalkNodes {
         self.path.len() as f32
     }
 
-    pub fn get_pos(&self, progress: &f32) -> Vec2 {
-        let pure_progress = progress * self.path_len() - 1.;
-        let fractional = 1. - (1. - pure_progress.fract()).powi(3);
-        let segment = pure_progress.floor() as usize;
+    pub fn get_pos(&self, progress: f32) -> Vec2 {
+        if self.path.is_empty() {
+            return Vec2::default();
+        }
+
+        // Handle edge cases for start and end cleanly
+        if progress <= 0.0 {
+            return self.path[0];
+        }
+        if progress >= 1.0 {
+            return *self.path.last().unwrap();
+        }
+
+        let num_segments = (self.path.len() - 1) as f32;
+        let scaled = progress * num_segments;
+
+        let segment = (scaled.floor() as usize).min(self.path.len() - 2);
+        let fractional = scaled.fract();
+
+        // Cubic ease-out calculation
+        let eased = 1. - (1. - fractional).powi(3);
 
         let b = self.path[segment];
-        let a = self.path[if pure_progress >= self.path_len() - 1. {
-            segment
-        } else {
-            segment + 1
-        }];
+        let a = self.path[segment + 1];
 
-        fractional * a + (1. - fractional) * b
+        eased * a + (1. - eased) * b
     }
 }
 

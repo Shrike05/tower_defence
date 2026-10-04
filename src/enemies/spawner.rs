@@ -1,45 +1,51 @@
+use std::fs;
 use std::path::Path;
+use std::time::Duration;
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::enemies::basic::WalkNodes;
-use crate::enemies::types::{EnemyType, create_enemy};
+use crate::enemies::types::{EnemyInactive, EnemyType, create_enemy};
 use crate::map::Map;
 use crate::map::objectives::Spawner;
 
-#[derive(Resource, Debug, Clone)]
-pub struct GameTimer(pub Timer);
-
-pub fn run_spawn_jobs(
-    mut timer: ResMut<GameTimer>,
-    spawn_jobs_handle: Res<SpawnConfigurationHandle>,
-    spawn_asset: Res<Assets<SpawnJobs>>,
+pub fn game_timer(
+    mut enemies: Query<(Entity, &mut EnemyInactive)>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
-    timer.0.tick(time.delta());
-    if let Some(spawn_jobs) = spawn_asset.get(&spawn_jobs_handle.handle) {
-        for spawn_job in spawn_jobs.jobs.iter() {
-            if (spawn_job.time_of_spawn - timer.0.elapsed_secs()).abs() < 0.1 {
-                println!("Spawning");
-                let path = WalkNodes::from_path_file(
-                    Path::new("./assets/levels/level0/path0.path"),
-                    &spawn_jobs_handle.map,
-                )
-                .expect("Can't Find this WalkNodes instance");
-                commands.spawn_scene(create_enemy(EnemyType::Basic, path));
-            }
+    for (enemy, mut enemy_timer) in enemies.iter_mut() {
+        enemy_timer.timer.tick(time.delta());
+        if enemy_timer.timer.is_finished() {
+            commands
+                .entity(enemy)
+                .remove::<EnemyInactive>()
+                .insert(Visibility::Visible);
         }
     }
 }
 
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let handle = asset_server.load("levels/level0/spawnjobs.enemies.toml");
-    commands.insert_resource(SpawnConfigurationHandle {
-        map: Map::from_map_file(Path::new("./assets/levels/level0/level0.map")),
-        handle,
-    });
+    let map = Map::from_map_file(Path::new("assets/levels/level0/level0.map"));
+    let contents = fs::read_to_string(Path::new("assets/levels/level0/spawnjobs.enemies.toml"))
+        .expect("Couldn't find file");
+    let spawn_jobs: SpawnJobs = toml::from_str(&contents).expect("Couldn't parse file");
+
+    let path = WalkNodes::from_path_file(Path::new("./assets/levels/level0/path0.path"), &map)
+        .expect("Can't Find this WalkNodes instance");
+
+    for spawn_job in spawn_jobs.jobs.iter() {
+        for i in 0..spawn_job.enemies_count {
+            commands.spawn_scene(create_enemy(
+                EnemyType::Basic,
+                path.clone(),
+                Duration::from_secs_f32(
+                    spawn_job.time_of_spawn + spawn_job.time_between_spawn * i as f32,
+                ),
+            ));
+        }
+    }
 }
 
 #[derive(Resource, Clone, Debug)]

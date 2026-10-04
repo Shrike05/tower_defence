@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -18,15 +20,21 @@ pub struct EnemyProgress {
 
 #[derive(Component, Debug, Clone, Default)]
 pub struct EnemyInactive {
-    timer: Timer,
+    pub timer: Timer,
 }
 
-pub fn create_enemy(enemy_type: EnemyType, path: WalkNodes) -> impl Scene {
+pub fn create_enemy(
+    enemy_type: EnemyType,
+    path: WalkNodes,
+    inactivity_time: Duration,
+) -> impl Scene {
     bsn! {
         Mesh3d(asset_value(Cuboid::new(0.7, 0.7, 0.7)))
         MeshMaterial3d<StandardMaterial>(asset_value(Color::srgb(1., 0., 0.)))
-        Transform::from_xyz(path.get_pos(&0.).x, 1., path.get_pos(&0.).y)
+        Transform::from_xyz(path.get_pos(0.).x, 1., path.get_pos(0.).y)
         EnemyProgress { path, progress: 0. }
         template_value(enemy_type)
+        EnemyInactive{timer: Timer::new(inactivity_time, TimerMode::Once)}
+        Visibility::Hidden
     }
 }
