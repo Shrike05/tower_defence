@@ -1,7 +1,5 @@
 Use new bevy scene notation
 
-Get enemies to spawn and move, both continuously and cartoonishly(discrete)
-
 Implement Towers
 
 Setup Grid with backdrop and objectives

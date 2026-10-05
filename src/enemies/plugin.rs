@@ -1,6 +1,5 @@
 use crate::enemies::{movement::update_enemy_positions, spawner::*};
 use bevy::prelude::*;
-use bevy_common_assets::toml::TomlAssetPlugin;
 
 pub struct EnemyPlugin;
 

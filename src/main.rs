@@ -3,6 +3,7 @@ use bevy::prelude::*;
 mod camera;
 mod enemies;
 mod map;
+mod towers;
 
 fn main() {
     App::new()
@@ -11,6 +12,7 @@ fn main() {
             map::MapPlugin,
             camera::CameraPlugin,
             enemies::EnemyPlugin,
+            towers::TowerPlugin,
         ))
         .run();
 }
