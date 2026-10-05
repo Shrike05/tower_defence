@@ -8,15 +8,15 @@ use std::path::Path;
 
 pub struct MapPlugin;
 
-#[derive(Resource)]
+#[derive(Resource, Debug, Clone)]
 pub struct Map {
-    width: u32,
+    pub width: u32,
     tiles: Vec<TileType>,
 }
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        let map = Map::from_map_file(Path::new("./levels/level0/level0.map"));
+        let map = Map::from_map_file(Path::new("./assets/levels/level0/level0.map"));
         let spawner = Spawner::new(0, map.get_tile_world_coordinates(40));
         let objective = Objective::new(0, map.get_tile_world_coordinates(49));
 
@@ -29,7 +29,7 @@ impl Plugin for MapPlugin {
 }
 
 impl Map {
-    fn from_map_file(path: &Path) -> Map {
+    pub fn from_map_file(path: &Path) -> Map {
         let mut result: Vec<TileType> = vec![];
 
         let content = fs::read_to_string(path).expect(&format!("Couldn't find {:?}", path));
@@ -48,21 +48,21 @@ impl Map {
         }
     }
 
-    fn get_tile_coordinates(&self, i: usize) -> Vec2 {
+    pub fn get_tile_coordinates(&self, i: usize) -> Vec2 {
         let width = self.width;
         let x = (i as u32).div(width) as f32;
         let z = (i as u32 % width) as f32;
-        Vec2 { x: x, y: z }
+        Vec2 { x, y: z }
     }
 
-    fn get_tile_world_coordinates(&self, i: usize) -> Vec2 {
+    pub fn get_tile_world_coordinates(&self, i: usize) -> Vec2 {
         let width = self.width;
         let height = (self.tiles.len() as u32).div(self.width);
 
         let x = 1.06 * ((i as u32).div(width) as f32 - height as f32 / 2.);
         let z = 1.06 * ((i as u32 % width) as f32 - width as f32 / 2.);
 
-        Vec2 { x: x, y: z }
+        Vec2 { x, y: z }
     }
 }
 
@@ -84,4 +84,3 @@ fn setup(
         ));
     }
 }
-

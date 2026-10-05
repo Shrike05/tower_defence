@@ -1,35 +1,30 @@
-use crate::map::Map;
 use bevy::{platform::collections::HashMap, prelude::*};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
 use std::path::Path;
+
+use crate::map::Map;
 const SEARCH_DEPTH: u32 = 100;
 
-#[derive(Debug, Clone, PartialEq, Component)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct WalkNodes {
-    path: Vec<IVec2>,
-}
-
-#[derive(Component, Clone, Debug, PartialEq)]
-pub struct EnemyPos {
-    progress: Vec<f32>,
-}
-
-impl EnemyPos {
-    pub fn add(&mut self, next_pos: f32) {
-        self.progress.push(next_pos);
-    }
-
-    pub fn set(&mut self, path: Vec<f32>) {
-        self.progress = path;
-    }
-
-    pub fn step(&mut self) -> f32 {
-        self.progress.remove(0)
-    }
+    path: Vec<Vec2>,
 }
 
 impl WalkNodes {
     pub fn from_path_file(file: &Path, map: &Map) -> Option<Self> {
-        None
+        let pairs = parse_file(file)?;
+
+        let path = pairs
+            .iter()
+            .map(|pair| {
+                let p = pair.1;
+                let i = p.y + p.x * map.width as i32;
+                map.get_tile_world_coordinates(i as usize)
+            })
+            .collect();
+
+        Some(WalkNodes { path })
     }
     pub fn shortest_path(
         start: IVec2,
@@ -37,22 +32,41 @@ impl WalkNodes {
         filter_map: HashMap<IVec2, bool>,
     ) -> Option<Self> {
         let path = a_star(&start, &end, filter_map)?;
-        Some(WalkNodes { path })
+        Some(WalkNodes {
+            path: path.iter().map(|p| p.as_vec2()).collect(),
+        })
     }
 
     pub fn path_len(&self) -> f32 {
         self.path.len() as f32
     }
 
-    pub fn get_pos(&self, progress: &f32) -> Vec2 {
-        let pure_progress = progress * self.path_len() - 1.;
-        let fractional = pure_progress.fract();
-        let segment = pure_progress.floor() as usize;
+    pub fn get_pos(&self, progress: f32) -> Vec2 {
+        if self.path.is_empty() {
+            return Vec2::default();
+        }
 
-        let a = self.path[segment].as_vec2();
-        let b = self.path[segment].as_vec2();
+        // Handle edge cases for start and end cleanly
+        if progress <= 0.0 {
+            return self.path[0];
+        }
+        if progress >= 1.0 {
+            return *self.path.last().unwrap();
+        }
 
-        fractional * a + (1. - fractional) * b
+        let num_segments = (self.path.len() - 1) as f32;
+        let scaled = progress * num_segments;
+
+        let segment = (scaled.floor() as usize).min(self.path.len() - 2);
+        let fractional = scaled.fract();
+
+        // Cubic ease-out calculation
+        let eased = 1. - (1. - fractional).powi(3);
+
+        let b = self.path[segment];
+        let a = self.path[segment + 1];
+
+        eased * a + (1. - eased) * b
     }
 }
 
@@ -116,4 +130,45 @@ fn a_star(start: &IVec2, end: &IVec2, filter_map: HashMap<IVec2, bool>) -> Optio
     }
 
     None
+}
+
+fn parse_file(file: &Path) -> Option<Vec<(IVec2, IVec2)>> {
+    let file = File::open(file).ok()?;
+    let reader = BufReader::new(file);
+    let mut pairs = Vec::new();
+
+    for line in reader.lines() {
+        let line = line.ok()?;
+        let line = line.trim();
+
+        // Skip empty lines
+        if line.is_empty() {
+            continue;
+        }
+
+        // Split the line by the arrow "->"
+        let parts: Vec<&str> = line.split("->").collect();
+        if parts.len() != 2 {
+            continue; // Skip lines that don't match the expected structure
+        }
+
+        // Helper closure to parse strings like "( 4, 74 )" into [i32; 2]
+        let parse_coord = |s: &str| -> Option<IVec2> {
+            let s = s.trim();
+            let s = s.strip_prefix('(')?.strip_suffix(')')?;
+            let coords: Vec<&str> = s.split(',').collect();
+            if coords.len() != 2 {
+                return None;
+            }
+            let x = coords[0].trim().parse::<i32>().ok()?;
+            let y = coords[1].trim().parse::<i32>().ok()?;
+            Some(IVec2::new(x, y))
+        };
+
+        if let (Some(c1), Some(c2)) = (parse_coord(parts[0]), parse_coord(parts[1])) {
+            pairs.push((c1, c2));
+        }
+    }
+
+    Some(pairs)
 }

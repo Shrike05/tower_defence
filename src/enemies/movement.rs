@@ -1,25 +1,22 @@
-use crate::enemies::basic::*;
+use crate::enemies::types::{EnemyInactive, EnemyProgress, EnemyType};
 use bevy::prelude::*;
-use rayon::prelude::*;
-
-pub fn movement(enemies_query: Query<(&mut EnemyPos, &WalkNodes, &mut Transform)>) {
-    for (mut ePos, nodes, transform) in enemies_query {
-        let pos = nodes.get_pos(&ePos.step());
-    }
-}
 
 //Compute only partially over several frames
-pub fn compute_progress(mut enemies_query: Query<(&mut EnemyPos, &WalkNodes)>) {
-    let speed = 0.1;
-    enemies_query.par_iter_mut().for_each(|(mut pos, nodes)| {
-        let path_len = nodes.path_len();
-        let my_speed = speed / path_len;
-
-        let paths = (0..path_len as u32)
-            .into_par_iter()
-            .map(|part| my_speed * part as f32)
-            .collect::<Vec<f32>>();
-
-        pos.set(paths);
-    });
+pub fn update_enemy_positions(
+    mut enemies_query: Query<
+        (&mut Transform, &mut EnemyProgress),
+        (With<EnemyType>, Without<EnemyInactive>),
+    >,
+    time: Res<Time>,
+) {
+    enemies_query
+        .par_iter_mut()
+        .for_each(|(mut pos, mut progress)| {
+            progress.progress += 0.1 * time.delta_secs();
+            if progress.progress >= 1. {
+                progress.progress = 1.;
+            }
+            let new_pos = progress.path.get_pos(progress.progress);
+            pos.translation = Vec3::new(new_pos.x, 1., new_pos.y);
+        });
 }
