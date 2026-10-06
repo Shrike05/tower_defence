@@ -13,6 +13,7 @@ fn main() {
             camera::CameraPlugin,
             enemies::EnemyPlugin,
             towers::TowerPlugin,
+            MeshPickingPlugin,
         ))
         .run();
 }

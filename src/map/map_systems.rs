@@ -1,6 +1,5 @@
 use super::tile::TileType;
 use crate::map::objectives::{Objective, Spawner};
-use crate::map::tile::TilePlugin;
 use bevy::prelude::*;
 use std::fs;
 use std::ops::Div;
@@ -23,7 +22,6 @@ impl Plugin for MapPlugin {
         app.insert_resource(map);
         app.insert_resource(spawner);
         app.insert_resource(objective);
-        app.add_plugins(TilePlugin);
         app.add_systems(Startup, setup);
     }
 }
@@ -72,15 +70,51 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     map: Res<Map>,
 ) {
+    let normal_mat = materials.add(Color::srgb(1., 1., 1.));
+    let elevated_mat = materials.add(Color::srgb(0.7, 0.7, 0.7));
+    let hover_mat = materials.add(Color::srgb(0.6, 0.6, 0.6));
     for (i, tile) in map.tiles.iter().enumerate() {
         let pos = map.get_tile_world_coordinates(i);
         let x = pos.x;
+        let y = match tile {
+            TileType::Ground => 0.,
+            TileType::Elevated(y_value) => *y_value,
+        };
         let z = pos.y;
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::default())),
-            MeshMaterial3d(materials.add(Color::srgb(1., 1., 1.))),
-            Transform::from_xyz(x as f32, 0., z as f32),
-            *tile,
-        ));
+
+        let mat = match tile {
+            TileType::Ground => normal_mat.clone(),
+            TileType::Elevated(_) => elevated_mat.clone(),
+        };
+        commands.spawn_scene(create_tile(x, y, z, *tile, mat, hover_mat.clone()));
+    }
+}
+
+fn create_tile(
+    x: f32,
+    y: f32,
+    z: f32,
+    tile: TileType,
+    normal_mat: Handle<StandardMaterial>,
+    hover_mat: Handle<StandardMaterial>,
+) -> impl Scene {
+    let mat = normal_mat.clone();
+    bsn! {
+        Mesh3d(asset_value(Cuboid::default()))
+        MeshMaterial3d<StandardMaterial>(mat)
+        Transform::from_xyz(x, y, z)
+        template_value(tile)
+
+        on(move |event: On<Pointer<Over>>, mut query: Query<&mut MeshMaterial3d<StandardMaterial>>|{
+            if let Ok(mut material) = query.get_mut(event.entity){
+                material.0 = hover_mat.clone();
+            }
+        })
+
+        on(move |event: On<Pointer<Out>>, mut query: Query<&mut MeshMaterial3d<StandardMaterial>>|{
+            if let Ok(mut material) = query.get_mut(event.entity){
+                material.0 = normal_mat.clone();
+            }
+        })
     }
 }
