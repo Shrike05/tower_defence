@@ -13,6 +13,14 @@ pub struct Map {
     tiles: Vec<TileType>,
 }
 
+#[derive(Resource, Clone, Debug, Default)]
+pub struct TileSelection {
+    pub tile: Option<(Transform, TileType)>,
+}
+
+#[derive(Message, Clone, Copy, Debug, Default)]
+pub struct TileClickedMessage;
+
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         let map = Map::from_map_file(Path::new("./assets/levels/level0/level0.map"));
@@ -22,6 +30,8 @@ impl Plugin for MapPlugin {
         app.insert_resource(map);
         app.insert_resource(spawner);
         app.insert_resource(objective);
+        app.insert_resource(TileSelection::default());
+        app.add_message::<TileClickedMessage>();
         app.add_systems(Startup, setup);
     }
 }
@@ -111,10 +121,16 @@ fn create_tile(
             }
         })
 
-        on(move |event: On<Pointer<Out>>, mut query: Query<&mut MeshMaterial3d<StandardMaterial>>|{
+        on(move |event: On<Pointer<Out>>, mut query: Query<&mut MeshMaterial3d<StandardMaterial>>, mut tile_selection: ResMut<TileSelection>|{
             if let Ok(mut material) = query.get_mut(event.entity){
                 material.0 = normal_mat.clone();
+                tile_selection.tile = None;
             }
+        })
+
+        on(move |event: On<Pointer<Click>>, mut tile_selection: ResMut<TileSelection>, mut message_writer: MessageWriter<TileClickedMessage>|{
+            tile_selection.tile = Some((Transform::from_xyz(x, y, z), tile));
+            message_writer.write(TileClickedMessage);
         })
     }
 }

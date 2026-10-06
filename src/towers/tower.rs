@@ -1,14 +1,25 @@
-use std::time::Duration;
+use std::{ops::Add, time::Duration};
 
 use bevy::prelude::*;
 
-pub fn setup(mut commands: Commands) {
-    commands.spawn_scene(create_tower(
-        Transform::from_xyz(2., 2., 2.),
-        1.,
-        5.,
-        vec![IVec2::new(0, 0), IVec2::new(1, 0)],
-    ));
+use crate::map::{TileClickedMessage, TileSelection};
+
+pub fn create_action(
+    mut commands: Commands,
+    tile_selection: Res<TileSelection>,
+    mut tile_click_message: MessageReader<TileClickedMessage>,
+) {
+    for _ in tile_click_message.read() {
+        if let Some((pos, tile)) = tile_selection.tile {
+            let position = pos.translation.add(Vec3::Y);
+            commands.spawn_scene(create_tower(
+                Transform::from_translation(position),
+                10.,
+                5.,
+                vec![IVec2::new(0, 0), IVec2::new(1, 0)],
+            ));
+        }
+    }
 }
 
 pub fn create_tower(
