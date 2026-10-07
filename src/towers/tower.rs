@@ -2,7 +2,10 @@ use std::{ops::Add, time::Duration};
 
 use bevy::prelude::*;
 
-use crate::map::{TileClickedMessage, TileSelection};
+use crate::{
+    enemies::{EnemyHealth, EnemyInactive, EnemyType},
+    map::{TileClickedMessage, TileSelection},
+};
 
 pub fn create_action(
     mut commands: Commands,
@@ -18,6 +21,33 @@ pub fn create_action(
                 5.,
                 vec![IVec2::new(0, 0), IVec2::new(1, 0)],
             ));
+        }
+    }
+}
+
+pub fn tower_attack(
+    mut towers_query: Query<(&Tower, &mut AttackTimer, &Transform)>,
+    mut enemies_query: Query<(Entity, &Transform, &mut EnemyHealth), Without<EnemyInactive>>,
+    mut commands: Commands,
+    time: Res<Time>,
+) {
+    for (tower, mut timer, transform) in towers_query.iter_mut() {
+        timer.0.tick(time.delta());
+        if !timer.0.is_finished() {
+            continue;
+        }
+        timer.0.reset();
+
+        let mut enemies_in_range: Vec<(Entity, &Transform, Mut<'_, EnemyHealth>)> =
+            enemies_query.iter_mut().collect();
+        if enemies_in_range.is_empty() {
+            continue;
+        }
+
+        enemies_in_range[0].2.hp -= 1;
+
+        if enemies_in_range[0].2.hp == 0 {
+            commands.entity(enemies_in_range[0].0).despawn();
         }
     }
 }
@@ -38,10 +68,10 @@ pub fn create_tower(
 }
 
 #[derive(Component, Debug, Clone, Default)]
-struct Tower {
+pub struct Tower {
     atk: f32,
     range: Vec<IVec2>,
 }
 
 #[derive(Component, Clone, Default, Debug)]
-struct AttackTimer(Timer);
+pub struct AttackTimer(Timer);
