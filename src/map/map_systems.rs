@@ -113,22 +113,22 @@ fn create_tile(
         Mesh3d(asset_value(Cuboid::default()))
         MeshMaterial3d<StandardMaterial>(mat)
         Transform::from_xyz(x, y, z)
-        template_value(tile)
+        tile
 
-        on(move |event: On<Pointer<Over>>, mut query: Query<&mut MeshMaterial3d<StandardMaterial>>|{
+        on(move |event: On<PointerOver>, mut query: Query<&mut MeshMaterial3d<StandardMaterial>>|{
             if let Ok(mut material) = query.get_mut(event.entity){
                 material.0 = hover_mat.clone();
             }
         })
 
-        on(move |event: On<Pointer<Out>>, mut query: Query<&mut MeshMaterial3d<StandardMaterial>>, mut tile_selection: ResMut<TileSelection>|{
+        on(move |event: On<PointerOut>, mut query: Query<&mut MeshMaterial3d<StandardMaterial>>, mut tile_selection: ResMut<TileSelection>|{
             if let Ok(mut material) = query.get_mut(event.entity){
                 material.0 = normal_mat.clone();
                 tile_selection.tile = None;
             }
         })
 
-        on(move |event: On<Pointer<Click>>, mut tile_selection: ResMut<TileSelection>, mut message_writer: MessageWriter<TileClickedMessage>|{
+        on(move |event: On<PointerClick>, mut tile_selection: ResMut<TileSelection>, mut message_writer: MessageWriter<TileClickedMessage>|{
             tile_selection.tile = Some((Transform::from_xyz(x, y, z), tile));
             message_writer.write(TileClickedMessage);
         })

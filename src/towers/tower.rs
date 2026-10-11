@@ -59,7 +59,7 @@ pub fn create_tower(
     range: Vec<IVec2>,
 ) -> impl Scene {
     bsn! {
-        template_value(transform)
+        transform
         Mesh3d(asset_value(Cuboid::new(0.7, 1., 0.7)))
         MeshMaterial3d<StandardMaterial>(asset_value(Color::srgb(0., 0., 1.)))
         Tower {atk, range}

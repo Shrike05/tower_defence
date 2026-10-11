@@ -18,7 +18,7 @@ fn camera() -> impl Scene {
     let transform = Transform::from_xyz(-4., 10., 0.).looking_at(Vec3::ZERO, Vec3::Y);
     bsn! {
         Camera3d::default()
-        template_value(transform)
+        transform
     }
 }
 

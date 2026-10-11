@@ -43,9 +43,9 @@ pub fn create_enemy(
         MeshMaterial3d<StandardMaterial>(asset_value(Color::srgb(1., 0., 0.)))
         Transform::from_xyz(path.get_pos(0.).x, 1., path.get_pos(0.).y)
         EnemyProgress { path, progress: 0. }
-        template_value(enemy_type)
+        enemy_type
         EnemyInactive{timer: Timer::new(inactivity_time, TimerMode::Once)}
         Visibility::Hidden
-        template_value(hp_component)
+        hp_component
     }
 }
