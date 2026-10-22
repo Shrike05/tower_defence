@@ -19,7 +19,13 @@ pub fn create_action(
                 Transform::from_translation(position),
                 10.,
                 5.,
-                vec![IVec2::new(0, 0), IVec2::new(1, 0)],
+                vec![
+                    IVec2::new(0, 0),
+                    IVec2::new(1, 0),
+                    IVec2::new(0, 1),
+                    IVec2::new(1, 1),
+                    IVec2::new(2, 0),
+                ],
             ));
         }
     }
@@ -38,8 +44,10 @@ pub fn tower_attack(
         }
         timer.0.reset();
 
-        let mut enemies_in_range: Vec<(Entity, &Transform, Mut<'_, EnemyHealth>)> =
-            enemies_query.iter_mut().collect();
+        let mut enemies_in_range: Vec<(Entity, &Transform, Mut<'_, EnemyHealth>)> = enemies_query
+            .iter_mut()
+            .filter(|enemy| tower.in_range(&*transform, enemy.1))
+            .collect();
         if enemies_in_range.is_empty() {
             continue;
         }
@@ -75,3 +83,19 @@ pub struct Tower {
 
 #[derive(Component, Clone, Default, Debug)]
 pub struct AttackTimer(Timer);
+
+impl Tower {
+    pub fn in_range(&self, self_position: &Transform, pos: &Transform) -> bool {
+        let grid_pos = IVec2::new(pos.translation.x as i32, pos.translation.z as i32);
+        let self_pos = IVec2::new(
+            self_position.translation.x as i32,
+            self_position.translation.z as i32,
+        );
+
+        self.range
+            .iter()
+            .map(|range| range + self_pos)
+            .collect::<Vec<IVec2>>()
+            .contains(&grid_pos)
+    }
+}
